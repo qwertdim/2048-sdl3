@@ -1,6 +1,7 @@
 # 2048 Game (SDL3)
 
 Project: classic 2048 game implemented in C using SDL3.
+Play game https://qwertdim.github.io/2048-sdl3/
 
 ## Description
 
