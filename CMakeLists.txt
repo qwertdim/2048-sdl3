@@ -64,7 +64,7 @@ endif()
 
 
 # Create an option to switch between a system sdl library and a vendored SDL library
-option(MYGAME_VENDORED "Use vendored libraries" OFF)
+option(MYGAME_VENDORED "Use vendored libraries" ON)
 
 
 if(MYGAME_VENDORED)
