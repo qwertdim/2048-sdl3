@@ -115,8 +115,14 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     Uint32 score = 0;
     static Uint32 delta = 0;
 
-    if (!as->mute && SDL_GetAudioStreamQueued(as->music_stream) < ((int) as->sounds[3].wav_data_len)) {
-        SDL_PutAudioStreamData(as->music_stream, as->sounds[3].wav_data, (int) as->sounds[3].wav_data_len);
+    if (!as->mute && SDL_GetAudioStreamQueued(as->music_stream) < 40960) {
+        static int music_index = 0;
+        int to_put = as->sounds[3].wav_data_len - music_index < 40960 ? as->sounds[3].wav_data_len - music_index : 40960;
+        SDL_PutAudioStreamData(as->music_stream, as->sounds[3].wav_data + music_index, to_put);
+        music_index += to_put;
+        if (music_index >= as->sounds[3].wav_data_len) {
+            music_index = 0;
+        }
     }
 
     // clear screen
@@ -444,7 +450,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     
     ReadGameData(as);
     SDL_GetRenderSafeArea(as->renderer, &as->safe_area);
-    if (!as->mute) {
+    if (as->mute) {
+        SDL_PauseAudioStreamDevice(as->stream);
+    } else {
         SDL_ResumeAudioStreamDevice(as->stream);
     }
 
