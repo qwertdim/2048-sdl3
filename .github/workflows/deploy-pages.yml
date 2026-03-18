@@ -41,8 +41,8 @@ jobs:
         run: |
           mkdir -p deploy-web
           cd build-web
-          cp game_2048.html ../deploy-web/index.html
-          cp -a  *.js *.wasm *.data ../deploy-web/ 2>/dev/null || true
+          cp ./Release/game_2048.html ../deploy-web/index.html
+          cp -a  ./Release/*.js ./Release/*.wasm ./Release/*.data ../deploy-web/ 2>/dev/null || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
