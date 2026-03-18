@@ -41,10 +41,8 @@ jobs:
         run: |
           mkdir -p deploy-web
           cd build-web
-          # Основные артефакты
-          cp -a *.html *.js *.wasm *.data *.worker.js ../deploy-web/ 2>/dev/null || true
-          # Копируем ассеты (включая SDL3 preload)
-          cp -a *.png *.wav ../deploy-web/ 2>/dev/null || true
+          cp game_2048.html ../deploy-web/index.html
+          cp -a  *.js *.wasm *.data ../deploy-web/ 2>/dev/null || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
