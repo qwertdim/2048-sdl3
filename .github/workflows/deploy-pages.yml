@@ -1,0 +1,56 @@
+name: Build & Deploy 2048 SDL3 (Emscripten) to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Emscripten SDK
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Install apt deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential git
+
+      - name: Configure CMake (web)
+        run: |
+          mkdir -p build-web
+          cd build-web
+          emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build web target
+        run: |
+          cd build-web
+          emmake make -j$(nproc)
+
+      - name: Collect deployment files
+        run: |
+          mkdir -p deploy-web
+          cd build-web
+          # Основные артефакты
+          cp -a *.html *.js *.wasm *.data *.worker.js ../deploy-web/ 2>/dev/null || true
+          # Копируем ассеты (включая SDL3 preload)
+          cp -a *.png *.wav ../deploy-web/ 2>/dev/null || true
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy-web
+          publish_branch: gh-pages
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
