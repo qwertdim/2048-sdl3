@@ -82,7 +82,7 @@ endif()
 
 # Link SDL to our executable. This also makes its include directory available to us. 
 if(EMSCRIPTEN)
-    target_link_options(${EXECUTABLE_NAME} PRIVATE "SHELL: -sFETCH --shell-file ../index.html")
+    target_link_options(${EXECUTABLE_NAME} PRIVATE "SHELL: -sFETCH --shell-file ../shell.html")
 endif()
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC
     SDL3::SDL3              # If using satelite libraries, SDL must be the last item in the list. 
