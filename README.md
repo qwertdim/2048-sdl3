@@ -31,6 +31,12 @@ Play game https://qwertdim.github.io/2048-sdl3/
 
 ## Build and Run
 
+```sh
+git clone https://github.com/qwertdim/2048-sdl3 --depth=1
+cd 2048-sdl3
+```
+### Linux
+
 1. Install dependencies: SDL3, CMake, compiler (gcc/clang).
 2. Build project:
 ```sh
@@ -43,6 +49,34 @@ cmake --build .
 ```sh
 ./game_2048
 ```
+
+### Windows
+
+1. Install dependencies: SDL3, CMake, Visual Studio (or MSVC) with C++ workload.
+2. Build project (from project root):
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64
+cmake --build . --config Release
+```
+3. Run:
+```powershell
+.\Release\game_2048.exe
+```
+
+### Web (Emscripten)
+
+1. Install Emscripten SDK and activate it (`source /path/to/emsdk/emsdk_env.sh`).
+2. Build project:
+```sh
+mkdir -p build
+cd build
+emcmake cmake ..
+emmake make
+```
+3. Run:
+- After the build completes, use `python3 -m http.server` in the build directory to make the page accessible.
 
 ## Support
 
