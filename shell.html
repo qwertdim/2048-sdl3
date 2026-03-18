@@ -19,6 +19,24 @@
           return canvas;
         })()
       };
+
+      function resumeAudioContext() {
+        try {
+          var ctx = (Module && Module.audioContext) || new (window.AudioContext || window.webkitAudioContext)();
+          if (ctx.state === 'suspended') {
+            ctx.resume().catch(function(e) {
+              console.log('AudioContext resume failed:', e);
+            });
+          }
+          Module = Module || {};
+          Module.audioContext = ctx;
+        } catch (e) {
+          console.log('AudioContext create/resume failed:', e);
+        }
+      }
+
+      document.addEventListener('pointerdown', resumeAudioContext, { once: true });
+      document.addEventListener('keydown', resumeAudioContext, { once: true });
     </script>
     
     <!-- Сюда Emscripten подставит основной JS-код -->

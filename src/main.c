@@ -447,6 +447,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         SDL_Log("Couldn't open audio device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+
+#ifdef __EMSCRIPTEN__
+    emscripten_run_script("if (typeof Module !== 'undefined' && Module.audioContext && Module.audioContext.state === 'suspended') Module.audioContext.resume();");
+#endif
     
     ReadGameData(as);
     SDL_GetRenderSafeArea(as->renderer, &as->safe_area);
@@ -571,11 +575,25 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         WriteSave(as);
         break;
     case SDL_EVENT_KEY_DOWN:
+#ifdef __EMSCRIPTEN__
+        static bool audio_resumed = false;
+        if (!audio_resumed) {
+            emscripten_run_script("if (typeof Module !== 'undefined' && Module.audioContext) { if (Module.audioContext.state === 'suspended') Module.audioContext.resume(); } else { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); Module.audioContext = ctx; } catch (e) { console.log('AudioContext failed', e); }}");
+            audio_resumed = true;
+        }
+#endif
         if (!event->key.repeat) {
             return handle_key_event_(as, event->key.scancode);
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
+#ifdef __EMSCRIPTEN__
+        static bool audio_resumed = false;
+        if (!audio_resumed) {
+            emscripten_run_script("if (typeof Module !== 'undefined' && Module.audioContext) { if (Module.audioContext.state === 'suspended') Module.audioContext.resume(); } else { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); Module.audioContext = ctx; } catch (e) { console.log('AudioContext failed', e); }}");
+            audio_resumed = true;
+        }
+#endif
         const SDL_FRect mute_button = {493.f, 53.f+as->safe_area.y, 38.f, 40.f};
         const SDL_FRect button = {211.f, 180.f, 154.f, 171.f};
         pressed_point.x = event->button.x;
