@@ -115,9 +115,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     Uint32 score = 0;
     static Uint32 delta = 0;
 
-    if (!as->mute && SDL_GetAudioStreamQueued(as->music_stream) < 40960) {
+    if (!as->mute && SDL_GetAudioStreamQueued(as->music_stream) < 4096) {
         static int music_index = 0;
-        int to_put = as->sounds[3].wav_data_len - music_index < 40960 ? as->sounds[3].wav_data_len - music_index : 40960;
+        int to_put = as->sounds[3].wav_data_len - music_index < 4096 ? as->sounds[3].wav_data_len - music_index : 4096;
         SDL_PutAudioStreamData(as->music_stream, as->sounds[3].wav_data + music_index, to_put);
         music_index += to_put;
         if (music_index >= as->sounds[3].wav_data_len) {
@@ -447,10 +447,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         SDL_Log("Couldn't open audio device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-
-#ifdef __EMSCRIPTEN__
-    emscripten_run_script("if (typeof Module !== 'undefined' && Module.audioContext && Module.audioContext.state === 'suspended') Module.audioContext.resume();");
-#endif
     
     ReadGameData(as);
     SDL_GetRenderSafeArea(as->renderer, &as->safe_area);
@@ -575,25 +571,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         WriteSave(as);
         break;
     case SDL_EVENT_KEY_DOWN:
-#ifdef __EMSCRIPTEN__
-        static bool audio_resumed = false;
-        if (!audio_resumed) {
-            emscripten_run_script("if (typeof Module !== 'undefined' && Module.audioContext) { if (Module.audioContext.state === 'suspended') Module.audioContext.resume(); } else { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); Module.audioContext = ctx; } catch (e) { console.log('AudioContext failed', e); }}");
-            audio_resumed = true;
-        }
-#endif
         if (!event->key.repeat) {
             return handle_key_event_(as, event->key.scancode);
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
-#ifdef __EMSCRIPTEN__
-        static bool audio_resumed = false;
-        if (!audio_resumed) {
-            emscripten_run_script("if (typeof Module !== 'undefined' && Module.audioContext) { if (Module.audioContext.state === 'suspended') Module.audioContext.resume(); } else { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); Module.audioContext = ctx; } catch (e) { console.log('AudioContext failed', e); }}");
-            audio_resumed = true;
-        }
-#endif
         const SDL_FRect mute_button = {493.f, 53.f+as->safe_area.y, 38.f, 40.f};
         const SDL_FRect button = {211.f, 180.f, 154.f, 171.f};
         pressed_point.x = event->button.x;

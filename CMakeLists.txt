@@ -83,7 +83,7 @@ endif()
 # Link SDL to our executable. This also makes its include directory available to us. 
 if(EMSCRIPTEN)
     # Emscripten web build options for audio/worker compatibility
-    target_link_options(${EXECUTABLE_NAME} PRIVATE "SHELL: -sUSE_PTHREADS=1 -sPROXY_TO_PTHREAD=1 -sPTHREAD_POOL_SIZE=4 -sALLOW_MEMORY_GROWTH=1 -sFETCH --shell-file ../shell.html")
+    target_link_options(${EXECUTABLE_NAME} PRIVATE "SHELL: -sFETCH --shell-file ../shell.html")
 endif()
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC
     SDL3::SDL3              # If using satelite libraries, SDL must be the last item in the list. 
