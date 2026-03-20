@@ -115,9 +115,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     Uint32 score = 0;
     static Uint32 delta = 0;
 
-    if (!as->mute && SDL_GetAudioStreamQueued(as->music_stream) < 4096) {
+    if (!as->mute && SDL_GetAudioStreamQueued(as->music_stream) < 40960) {
         static int music_index = 0;
-        int to_put = as->sounds[3].wav_data_len - music_index < 4096 ? as->sounds[3].wav_data_len - music_index : 4096;
+        int to_put = as->sounds[3].wav_data_len - music_index < 40960 ? as->sounds[3].wav_data_len - music_index : 40960;
         SDL_PutAudioStreamData(as->music_stream, as->sounds[3].wav_data + music_index, to_put);
         music_index += to_put;
         if (music_index >= as->sounds[3].wav_data_len) {
