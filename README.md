@@ -77,8 +77,3 @@ emmake make
 ```
 3. Run:
 - After the build completes, use `python3 -m http.server` in the build directory to make the page accessible.
-
-## Support
-
-If something does not work, open an issue, submit a pull request, or contact the project author.
-
