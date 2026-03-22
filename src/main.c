@@ -449,6 +449,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     }
     
     ReadGameData(as);
+    SDL_SetRenderLogicalPresentation(as->renderer, SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     SDL_GetRenderSafeArea(as->renderer, &as->safe_area);
     if (as->mute) {
         SDL_PauseAudioStreamDevice(as->stream);
