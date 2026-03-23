@@ -40,6 +40,7 @@ jobs:
       - name: Collect deployment files
         run: |
           mkdir -p deploy-web
+          cp Favicon.png deploy-web
           cd build-web
           cp ./Release/game_2048.html ../deploy-web/index.html
           cp -a  ./Release/*.js ./Release/*.wasm ./Release/*.data ../deploy-web/ 2>/dev/null || true
