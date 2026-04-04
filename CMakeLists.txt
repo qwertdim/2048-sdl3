@@ -72,7 +72,7 @@ if(MYGAME_VENDORED)
     FetchContent_Declare(
       SDL3
       GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-      GIT_TAG release-3.4.2
+      GIT_TAG release-3.4.4
     )
     FetchContent_MakeAvailable(SDL3)
 else()
@@ -83,7 +83,7 @@ endif()
 # Link SDL to our executable. This also makes its include directory available to us. 
 if(EMSCRIPTEN)
     # Emscripten web build options for audio/worker compatibility
-    target_link_options(${EXECUTABLE_NAME} PRIVATE "SHELL: -sFETCH --shell-file ../shell.html")
+    target_link_options(${EXECUTABLE_NAME} PRIVATE "SHELL: --shell-file ../shell.html")
 endif()
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC
     SDL3::SDL3              # If using satelite libraries, SDL must be the last item in the list. 

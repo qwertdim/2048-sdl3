@@ -10,32 +10,6 @@ the Free Software Foundation; version 2 of the License.
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include "engine.h"
-#ifdef __EMSCRIPTEN__
-#include <emscripten/fetch.h>
-static void* data = NULL;
-static bool flag_attr = false;
-
-void load_success(emscripten_fetch_t * fetch) {
-    SDL_memcpy(data, fetch->data, fetch->numBytes);
-    flag_attr = true;
-    emscripten_fetch_close(fetch);
-}
-
-void load_failed(emscripten_fetch_t * fetch) {
-    SDL_Log("Downloading %s failed, HTTP failure status code: %d.", fetch->url, fetch->status);
-    flag_attr = false;
-    emscripten_fetch_close(fetch);
-}
-
-void save_success(emscripten_fetch_t * fetch) {
-    emscripten_fetch_close(fetch);
-}
-
-void save_failed(emscripten_fetch_t * fetch) {
-    SDL_Log("IDB store failed.");
-    emscripten_fetch_close(fetch);
-}
-#endif
 
 #define DURATION 150
 #define TILE_SIZE_IN_PIXELS 128.0f
@@ -328,16 +302,6 @@ SDL_AppResult ReadGameData(AppState *appstate)
 bool ReadSave(AppState *appstate)
 {
     bool flag = true;
-#ifdef __EMSCRIPTEN__
-    emscripten_fetch_attr_t attr;
-    emscripten_fetch_attr_init(&attr);
-    strcpy(attr.requestMethod, "GET");
-    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_PERSIST_FILE;
-    attr.onsuccess = load_success;
-    attr.onerror = load_failed;
-    emscripten_fetch(&attr, "/qwertdim/game_2048/save0.sav");
-    flag = flag_attr;
-#else
     SDL_Storage *user = SDL_OpenUserStorage("qwertdim", "game_2048", 0);
     if (user == NULL) {
         SDL_Log("Couldn't open User Storage: %s", SDL_GetError());
@@ -359,24 +323,12 @@ bool ReadSave(AppState *appstate)
     }
 
     SDL_CloseStorage(user);
-#endif
     return flag;
 }
 
 
 void WriteSave(AppState *appstate)
 {
-#ifdef __EMSCRIPTEN__
-    emscripten_fetch_attr_t attr;
-    emscripten_fetch_attr_init(&attr);
-    strcpy(attr.requestMethod, "EM_IDB_STORE");
-    attr.attributes = EMSCRIPTEN_FETCH_REPLACE | EMSCRIPTEN_FETCH_PERSIST_FILE;
-    attr.requestData = (void *)appstate->tiles;
-    attr.requestDataSize = sizeof(AppState) - offsetof(AppState, tiles);
-    attr.onsuccess = save_success;
-    attr.onerror = save_failed;
-    emscripten_fetch(&attr, "/qwertdim/game_2048/save0.sav");
-#else
     SDL_Storage *user = SDL_OpenUserStorage("qwertdim", "game_2048", 0);
     if (user == NULL) {
         SDL_Log("Couldn't open User Storage: %s", SDL_GetError());
@@ -392,7 +344,6 @@ void WriteSave(AppState *appstate)
         SDL_Log("Couldn't write storage file: %s", SDL_GetError());
     }
     SDL_CloseStorage(user);
-#endif
 }
 
 
@@ -432,9 +383,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     }
 
     *appstate = as;
-#ifdef __EMSCRIPTEN__
-    data = (void *)as->tiles;
-#endif
 
     if (!SDL_CreateWindowAndRenderer("Game 2048", SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &as->window, &as->renderer)) {
         return SDL_APP_FAILURE;
@@ -558,6 +506,9 @@ static SDL_AppResult handle_key_event_(AppState *appstate, SDL_Scancode key_code
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
     AppState *as = (AppState *)appstate;
+    const SDL_FRect mute_button = {493.f, 53.f+as->safe_area.y, 38.f, 40.f};
+    const SDL_FRect button = {211.f, 134.f+as->safe_area.y, 154.f, 171.f};
+    float x, y, mag;
     SDL_ConvertEventToRenderCoordinates(as->renderer, event);
     static SDL_FPoint pressed_point = { };
     bool moved = false;
@@ -577,8 +528,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        const SDL_FRect mute_button = {493.f, 53.f+as->safe_area.y, 38.f, 40.f};
-        const SDL_FRect button = {211.f, 180.f, 154.f, 171.f};
         pressed_point.x = event->button.x;
         pressed_point.y = event->button.y;
         if (SDL_PointInRectFloat(&pressed_point, &mute_button)) {
@@ -598,9 +547,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_UP:
-        float x = event->button.x - pressed_point.x;
-        float y = event->button.y - pressed_point.y;
-        float mag = SDL_sqrtf(x*x + y*y);
+        x = event->button.x - pressed_point.x;
+        y = event->button.y - pressed_point.y;
+        mag = SDL_sqrtf(x*x + y*y);
         if (mag > 40.f) {
             x /= mag;
             y /= mag;
