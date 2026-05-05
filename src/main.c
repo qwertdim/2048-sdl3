@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (C) 2026 qwertdim <dmitry.pimenoff@gmail.com>
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ static void draw_score(AppState* as, SDL_FPoint* point, Sint32 score)
     while (num) {
         Sint32 i = num % 10;
         width += coord_x[i+1] - coord_x[i];
-        num /= 10; 
+        num /= 10;
     }
 
     SDL_FRect dst = {point->x + width/2.f, point->y, 0.f, 32.f};
@@ -72,7 +72,7 @@ static void draw_score(AppState* as, SDL_FPoint* point, Sint32 score)
         src.w = dst.w = coord_x[i+1] - coord_x[i] + 4.f;
         dst.x -= dst.w - 4.f;
         SDL_RenderTexture(as->renderer, as->texture, &src, &dst);
-        num /= 10; 
+        num /= 10;
     }
 }
 
@@ -113,8 +113,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_FRect dst = {493.f, 53.f+as->safe_area.y, 38.f, 40.f};
         SDL_RenderTexture(as->renderer, as->texture, &src, &dst);
     }
-    
- 
+
     // draw board
     SDL_RenderFillRect(as->renderer, &board);
     SDL_RenderTextureTiled(as->renderer, as->bgtile_texture, NULL, 1.f, &board);
@@ -213,7 +212,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     } else {
         delta = 0;
     }
-    
+
     //draw message
     if ((as->win && !as->continue_game) || as->game_over) {
         SDL_RenderFillRect(as->renderer, &board);
@@ -318,7 +317,7 @@ bool ReadSave(AppState *appstate)
             flag = false;
         }
     } else {
-        SDL_Log("Couldn't get file size: %s, or file size %lu != %lu", SDL_GetError(), saveLen, sizeof(AppState) - offsetof(AppState, tiles));
+        SDL_Log("Couldn't get file size: %s, or file size %"SDL_PRIu64" != %zu", SDL_GetError(), saveLen, sizeof(AppState) - offsetof(AppState, tiles));
         flag = false;
     }
 
@@ -371,7 +370,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
             return SDL_APP_FAILURE;
         }
     }
-    
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
         return SDL_APP_FAILURE;
@@ -395,7 +394,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         SDL_Log("Couldn't open audio device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    
+
     ReadGameData(as);
     SDL_SetRenderLogicalPresentation(as->renderer, SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     SDL_GetRenderSafeArea(as->renderer, &as->safe_area);
