@@ -6,9 +6,10 @@ the Free Software Foundation; version 2 of the License.
 */
 
 #include <stdbool.h>
+#include <SDL3/SDL_stdinc.h>
 #include "engine.h"
 
-int SDL_rand(int);
+Sint32 SDL_rand(Sint32);
 float SDL_randf(void);
 
 void new_tile(Tile* ctx)
