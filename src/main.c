@@ -38,11 +38,13 @@ typedef struct AppState
     Tile tiles[SIZE_BOARD*SIZE_BOARD];
     Uint32 score;
     Uint32 best;
-    bool game_over;
-    bool win;
-    bool continue_game;
-    bool pressed_button;
-    bool mute;
+    struct {
+        unsigned game_over: 1;
+        unsigned win: 1;
+        unsigned continue_game: 1;
+        unsigned pressed_button: 1;
+        unsigned mute: 1;
+    };
 } AppState;
 
 
