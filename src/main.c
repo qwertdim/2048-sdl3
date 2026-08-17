@@ -46,6 +46,8 @@ typedef struct AppState
         unsigned continue_game : 1;
         unsigned pressed_button : 1;
         unsigned mute : 1;
+        unsigned anim : 1;
+        unsigned anim2 : 1;
     };
 } AppState;
 
@@ -86,11 +88,46 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *as = (AppState *)appstate;
     const Uint64 now = SDL_GetTicks();
+    const Tile *end_tile = as->tiles + SIZE_BOARD * SIZE_BOARD;
+
+    if (as->anim && as->stop_anim_at < now + DURATION)
+    {
+        as->anim = false;
+        for (Tile *tile = as->tiles; tile != end_tile; ++tile)
+        {
+            if (tile->state == GENER)
+            {
+                tile->state = GENER2;
+            }
+            else if (tile->state == MERGE)
+            {
+                tile->state = MERGE2;
+            }
+            else if (tile->state == MOVE)
+            {
+                tile->state = IDLE;
+            }
+        }
+    }
+    if (as->anim2 && as->stop_anim_at < now)
+    {
+        for (Tile *tile = as->tiles; tile != end_tile; ++tile)
+        {
+            if (tile->state == GENER2)
+            {
+                tile->state = IDLE;
+            }
+            else if (tile->state == MERGE2)
+            {
+                tile->state = IDLE;
+            }
+        }
+    }
+
     const SDL_FRect board = {32.f, 480.f, TILE_SIZE_IN_PIXELS * SIZE_BOARD, TILE_SIZE_IN_PIXELS * SIZE_BOARD};
     SDL_FRect src_rect = {0.f, 0.f, 512.f, 318.f};
     SDL_FRect dst_rect = {32.f, 32.f, 512.f, 318.f};
     float scale;
-    const Tile *end_tile = as->tiles + SIZE_BOARD * SIZE_BOARD;
     Uint32 score = 0;
     static Uint32 delta = 0;
 
@@ -135,71 +172,40 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         switch (tile->state)
         {
         case HIDDEN:
+        case GENER:
+            break;
+        case GENER2:
+            scale = (float)(DURATION - (as->stop_anim_at - now)) / DURATION;
+            dst_rect.w *= scale;
+            dst_rect.h *= scale;
+            dst_rect.x += (TILE_SIZE_IN_PIXELS - dst_rect.w) / 2.f;
+            dst_rect.y += (TILE_SIZE_IN_PIXELS - dst_rect.h) / 2.f;
+            SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
+            dst_rect.w = dst_rect.h = TILE_SIZE_IN_PIXELS;
             break;
         case IDLE:
             score += tile->num * (1 << (tile->num + 1));
             SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
             break;
+        case MERGE:
+            src_rect.x = (float)((tile->num - 1) & 3) * TILE_SIZE_IN_PIXELS;
+            src_rect.y = (float)((tile->num - 1) >> 2) * TILE_SIZE_IN_PIXELS;
         case MOVE:
             score += tile->num * (1 << (tile->num + 1));
-            if (now < as->stop_anim_at - DURATION)
-            {
-                scale = (float)(DURATION - (as->stop_anim_at - DURATION - now)) / DURATION;
-                const float from_x = (float)(tile->from & 3) * TILE_SIZE_IN_PIXELS + 32.f;
-                const float from_y = (float)(tile->from >> 2) * TILE_SIZE_IN_PIXELS + 480.f;
-                dst_rect.x = from_x - (from_x - dst_rect.x) * scale;
-                dst_rect.y = from_y - (from_y - dst_rect.y) * scale;
-            }
-            else
-            {
-                tile->state = IDLE;
-            }
+            scale = (float)(DURATION - (as->stop_anim_at - DURATION - now)) / DURATION;
+            const float from_x = (float)(tile->from & 3) * TILE_SIZE_IN_PIXELS + 32.f;
+            const float from_y = (float)(tile->from >> 2) * TILE_SIZE_IN_PIXELS + 480.f;
+            dst_rect.x = from_x - (from_x - dst_rect.x) * scale;
+            dst_rect.y = from_y - (from_y - dst_rect.y) * scale;
             SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
             break;
-        case MERGE:
+        case MERGE2:
             score += tile->num * (1 << (tile->num + 1));
-            if (now < as->stop_anim_at - DURATION)
-            {
-                scale = (float)(DURATION - (as->stop_anim_at - DURATION - now)) / DURATION;
-                const float from_x = (float)(tile->from & 3) * TILE_SIZE_IN_PIXELS + 32.f;
-                const float from_y = (float)(tile->from >> 2) * TILE_SIZE_IN_PIXELS + 480.f;
-                dst_rect.x = from_x - (from_x - dst_rect.x) * scale;
-                dst_rect.y = from_y - (from_y - dst_rect.y) * scale;
-                src_rect.x = (float)((tile->num - 1) & 3) * TILE_SIZE_IN_PIXELS;
-                src_rect.y = (float)((tile->num - 1) >> 2) * TILE_SIZE_IN_PIXELS;
-            }
-            else if (now < as->stop_anim_at)
-            {
-                scale = 1.25f - 0.5f * (float)SDL_abs(DURATION / 2 - (as->stop_anim_at - now)) / DURATION;
-                dst_rect.w *= scale;
-                dst_rect.h *= scale;
-                dst_rect.x += (TILE_SIZE_IN_PIXELS - dst_rect.w) / 2.f;
-                dst_rect.y += (TILE_SIZE_IN_PIXELS - dst_rect.h) / 2.f;
-            }
-            else
-            {
-                tile->state = IDLE;
-            }
-            SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
-            dst_rect.w = dst_rect.h = TILE_SIZE_IN_PIXELS;
-            break;
-        case GENER:
-            if (now < as->stop_anim_at - DURATION)
-            {
-                break;
-            }
-            if (now < as->stop_anim_at)
-            {
-                scale = (float)(DURATION - (as->stop_anim_at - now)) / DURATION;
-                dst_rect.w *= scale;
-                dst_rect.h *= scale;
-                dst_rect.x += (TILE_SIZE_IN_PIXELS - dst_rect.w) / 2.f;
-                dst_rect.y += (TILE_SIZE_IN_PIXELS - dst_rect.h) / 2.f;
-            }
-            else
-            {
-                tile->state = IDLE;
-            }
+            scale = 1.25f - 0.5f * (float)SDL_abs(DURATION / 2 - (as->stop_anim_at - now)) / DURATION;
+            dst_rect.w *= scale;
+            dst_rect.h *= scale;
+            dst_rect.x += (TILE_SIZE_IN_PIXELS - dst_rect.w) / 2.f;
+            dst_rect.y += (TILE_SIZE_IN_PIXELS - dst_rect.h) / 2.f;
             SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
             dst_rect.w = dst_rect.h = TILE_SIZE_IN_PIXELS;
             break;
@@ -484,6 +490,8 @@ static void reset_game(AppState *appstate)
     appstate->win = false;
     appstate->continue_game = false;
     appstate->pressed_button = true;
+    appstate->anim = true;
+    appstate->anim2 = true;
 }
 
 static void process_move_result(AppState *as)
@@ -516,6 +524,8 @@ static void process_move_result(AppState *as)
         SDL_FlushAudioStream(as->stream);
     }
     as->stop_anim_at = SDL_GetTicks() + 2 * DURATION;
+    as->anim = true;
+    as->anim2 = true;
 }
 
 static SDL_AppResult handle_key_event_(AppState *appstate, SDL_Scancode key_code)

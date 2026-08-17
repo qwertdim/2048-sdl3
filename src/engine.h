@@ -1,14 +1,13 @@
-/* 
+/*
 Copyright (C) 2026 qwertdim <dmitry.pimenoff@gmail.com>
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by
 the Free Software Foundation; version 2 of the License.
 */
 
-#pragma once 
+#pragma once
 
 #define SIZE_BOARD 4
-
 
 enum Direction
 {
@@ -18,14 +17,15 @@ enum Direction
     DIR_DOWN
 };
 
-
 enum TileState
 {
     HIDDEN,
+    GENER,
+    GENER2,
     IDLE,
     MOVE,
     MERGE,
-    GENER
+    MERGE2
 };
 
 typedef struct Tile
