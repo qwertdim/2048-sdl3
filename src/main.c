@@ -111,6 +111,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     }
     if (as->anim2 && as->stop_anim_at < now)
     {
+        as->anim2 = false;
         for (Tile *tile = as->tiles; tile != end_tile; ++tile)
         {
             if (tile->state == GENER2)
@@ -162,9 +163,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // draw board
     SDL_RenderFillRect(as->renderer, &board);
     SDL_RenderTextureTiled(as->renderer, as->bgtile_texture, NULL, 1.f, &board);
-    dst_rect.w = dst_rect.h = src_rect.w = src_rect.h = TILE_SIZE_IN_PIXELS;
+    src_rect.w = src_rect.h = TILE_SIZE_IN_PIXELS;
     for (Tile *tile = as->tiles; tile != end_tile; ++tile)
     {
+        dst_rect.w = dst_rect.h = TILE_SIZE_IN_PIXELS;
         dst_rect.x = (float)(tile->pos & 3) * TILE_SIZE_IN_PIXELS + 32.f;
         dst_rect.y = (float)(tile->pos >> 2) * TILE_SIZE_IN_PIXELS + 480.f;
         src_rect.x = (float)(tile->num & 3) * TILE_SIZE_IN_PIXELS;
@@ -173,19 +175,16 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         {
         case HIDDEN:
         case GENER:
-            break;
+            continue;
         case GENER2:
             scale = (float)(DURATION - (as->stop_anim_at - now)) / DURATION;
             dst_rect.w *= scale;
             dst_rect.h *= scale;
             dst_rect.x += (TILE_SIZE_IN_PIXELS - dst_rect.w) / 2.f;
             dst_rect.y += (TILE_SIZE_IN_PIXELS - dst_rect.h) / 2.f;
-            SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
-            dst_rect.w = dst_rect.h = TILE_SIZE_IN_PIXELS;
             break;
         case IDLE:
             score += tile->num * (1 << (tile->num + 1));
-            SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
             break;
         case MERGE:
             src_rect.x = (float)((tile->num - 1) & 3) * TILE_SIZE_IN_PIXELS;
@@ -197,7 +196,6 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             const float from_y = (float)(tile->from >> 2) * TILE_SIZE_IN_PIXELS + 480.f;
             dst_rect.x = from_x - (from_x - dst_rect.x) * scale;
             dst_rect.y = from_y - (from_y - dst_rect.y) * scale;
-            SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
             break;
         case MERGE2:
             score += tile->num * (1 << (tile->num + 1));
@@ -206,12 +204,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             dst_rect.h *= scale;
             dst_rect.x += (TILE_SIZE_IN_PIXELS - dst_rect.w) / 2.f;
             dst_rect.y += (TILE_SIZE_IN_PIXELS - dst_rect.h) / 2.f;
-            SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
-            dst_rect.w = dst_rect.h = TILE_SIZE_IN_PIXELS;
             break;
         default:
-            break;
+            continue;
         }
+        SDL_RenderTexture(as->renderer, as->tiles_texture, &src_rect, &dst_rect);
     }
 
     // draw score
@@ -228,7 +225,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     // draw delta score
     delta += score - as->score;
-    if (delta && now < as->stop_anim_at)
+    if (delta && as->anim2)
     {
         as->score = score;
         p_score.x -= 280.f;
@@ -260,7 +257,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // draw pressed button
     if (as->pressed_button)
     {
-        if (now < as->stop_anim_at - DURATION)
+        if (as->anim)
         {
             scale = 1.05f - 0.1f * (float)SDL_abs(DURATION / 2 - (as->stop_anim_at - now - DURATION)) / DURATION;
             const SDL_FRect dst = {211.f, 134.f + as->safe_area.y, 154.f, 171.f * scale};
